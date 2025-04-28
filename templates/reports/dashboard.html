@@ -1,0 +1,427 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reports - Wallet Watcher{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
+        
+        <div class="flex space-x-2">
+            <a href="{% url 'reports:list' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600">
+                Saved Reports
+            </a>
+            <a href="{% url 'reports:create_custom' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                Custom Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Time period selector -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Report Settings</h2>
+        </div>
+        <div class="p-4 sm:p-6">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Report Type -->
+                    <div>
+                        <label for="report_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Report Type</label>
+                        <select id="report_type" name="report_type" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white" onchange="this.form.submit()">
+                            {% for value, name in report_types %}
+                                <option value="{{ value }}" {% if value == report_type %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Sort By -->
+                    <div>
+                        <label for="sort_by" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sort Transactions By</label>
+                        <select id="sort_by" name="sort_by" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white" onchange="this.form.submit()">
+                            {% for value, name in sort_options %}
+                                <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Period navigation -->
+                <div class="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                    <div class="flex space-x-2">
+                        <button type="submit" name="action" value="prev" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Previous
+                        </button>
+                        <button type="submit" name="action" value="next" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Next
+                            <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ period_text }}
+                        </div>
+                        {% if period_offset != 0 %}
+                        <button type="submit" name="action" value="reset" class="text-sm text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 ml-2">
+                            Reset to Current Period
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Save Report Card -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Save This Report</h2>
+        </div>
+        <div class="p-4 sm:p-6">
+            <form method="post" action="{% url 'reports:create_'|add:report_type %}">
+                {% csrf_token %}
+                <input type="hidden" name="period_offset" value="{{ period_offset }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="id_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Report Title</label>
+                        <input type="text" name="title" id="id_title" value="{{ report_type|title }} Report - {{ period_text }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label for="id_sort_by" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</label>
+                        <select name="sort_by" id="id_sort_by" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                            {% for value, name in sort_options %}
+                                <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Save Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Income -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-100 dark:bg-green-900 rounded-md p-3">
+                    <svg class="h-6 w-6 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Income</h2>
+                    <p class="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">&#2547;{{ report_data.summary.total_income|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Expenses -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-red-100 dark:bg-red-900 rounded-md p-3">
+                    <svg class="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Expenses</h2>
+                    <p class="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">&#2547;{{ report_data.summary.total_expense|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Balance -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900 rounded-md p-3">
+                    <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Net Balance</h2>
+                    <p class="mt-1 text-lg font-medium {% if report_data.summary.balance >= 0 %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
+                        &#2547;{{ report_data.summary.balance|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Count -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900 rounded-md p-3">
+                    <svg class="h-6 w-6 text-purple-600 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Transactions</h2>
+                    <p class="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">{{ report_data.summary.transaction_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Balance History Chart -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Balance History</h3>
+            <div class="h-64">
+                <canvas id="balanceHistoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category Distribution Chart Container -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Income by Category -->
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Income by Category</h3>
+                <div class="h-64">
+                    <canvas id="incomeCategoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Expense by Category -->
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Expense by Category</h3>
+                <div class="h-64">
+                    <canvas id="expenseCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Transactions</h2>
+        </div>
+        <div class="p-0">
+            {% if report_data.transactions %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {% for transaction in report_data.transactions %}
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ transaction.date|slice:":10" }}
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {{ transaction.name }}
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if transaction.type == 'Income' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
+                                            {{ transaction.type }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ transaction.category }}
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium {% if transaction.type == 'Income' %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
+                                        &#2547;{{ transaction.amount|floatformat:2 }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-4 sm:p-6 text-center text-gray-500 dark:text-gray-400">
+                    No transactions found for this period.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Saved Reports -->
+    {% if saved_reports %}
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Recently Saved {{ report_type|title }} Reports</h2>
+        </div>
+        <div class="p-0">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date Range</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
+                            <th class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for report in saved_reports %}
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {{ report.title }}
+                                </td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {{ report.start_date|date:"M d, Y" }} - {{ report.end_date|date:"M d, Y" }}
+                                </td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {{ report.created_at|date:"M d, Y H:i" }}
+                                </td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                                    <a href="{% url 'reports:detail' pk=report.id %}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 mr-3">View</a>
+                                    <a href="{% url 'reports:download' pk=report.id %}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Download</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Parse the properly encoded JSON data
+        const chartData = JSON.parse('{{ chart_data|escapejs }}');
+        console.log('Chart data loaded:', chartData);
+
+        // 1. Balance History Chart (Line Chart)
+        const balanceCtx = document.getElementById('balanceHistoryChart');
+        if (balanceCtx) {
+            new Chart(balanceCtx.getContext('2d'), {
+                type: 'line',
+                data: chartData.balance_history,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Balance: ৳${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '৳' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Income by Category (Pie Chart)
+        const incomeCtx = document.getElementById('incomeCategoryChart');
+        if (incomeCtx) {
+            new Chart(incomeCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: chartData.income_by_category.labels,
+                    datasets: [{
+                        data: chartData.income_by_category.data,
+                        backgroundColor: chartData.income_by_category.backgroundColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ৳${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Expense by Category (Pie Chart)
+        const expenseCtx = document.getElementById('expenseCategoryChart');
+        if (expenseCtx) {
+            new Chart(expenseCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: chartData.expense_by_category.labels,
+                    datasets: [{
+                        data: chartData.expense_by_category.data,
+                        backgroundColor: chartData.expense_by_category.backgroundColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ৳${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+        // Optional: Display error message to user
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4';
+        errorDiv.innerHTML = '<p>Error loading charts. Please try refreshing the page.</p>';
+        document.querySelector('.space-y-6').prepend(errorDiv);
+    }
+});
+</script>
+{% endblock %}

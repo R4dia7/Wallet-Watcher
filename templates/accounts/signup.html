@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Wallet Watcher{% endblock %}
+
+{% block content %}
+<div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+                Create your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                Or
+                <a href="{% url 'accounts:login' %}" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                    sign in to your existing account
+                </a>
+            </p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="rounded-md bg-red-50 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">
+                        There were errors with your submission
+                    </h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <ul class="list-disc pl-5 space-y-1">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <form class="mt-8 space-y-6" method="post" novalidate>
+            {% csrf_token %}
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="email" class="sr-only">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border {% if form.email.errors %}border-red-300{% else %}border-gray-300{% endif %} dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800"
+                        placeholder="Email address"
+                        value="{{ form.email.value|default:'' }}">
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="first_name" class="sr-only">First name</label>
+                    <input id="first_name" name="first_name" type="text" autocomplete="given-name" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border {% if form.first_name.errors %}border-red-300{% else %}border-gray-300{% endif %} dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800"
+                        placeholder="First name"
+                        value="{{ form.first_name.value|default:'' }}">
+                    {% if form.first_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="last_name" class="sr-only">Last name</label>
+                    <input id="last_name" name="last_name" type="text" autocomplete="family-name" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border {% if form.last_name.errors %}border-red-300{% else %}border-gray-300{% endif %} dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800"
+                        placeholder="Last name"
+                        value="{{ form.last_name.value|default:'' }}">
+                    {% if form.last_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="date_of_birth" class="sr-only">Date of birth</label>
+                    <input id="date_of_birth" name="date_of_birth" type="date"
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800">
+                </div>
+                <div>
+                    <label for="phone_number" class="sr-only">Phone number</label>
+                    <input id="phone_number" name="phone_number" type="tel"
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800"
+                        placeholder="Phone number">
+                </div>
+                <div>
+                    <label for="password1" class="sr-only">Password</label>
+                    <input id="password1" name="password1" type="password" autocomplete="new-password" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border {% if form.password1.errors %}border-red-300{% else %}border-gray-300{% endif %} dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800"
+                        placeholder="Password">
+                    {% if form.password1.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.password1.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.password1.help_text }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="password2" class="sr-only">Confirm password</label>
+                    <input id="password2" name="password2" type="password" autocomplete="new-password" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border {% if form.password2.errors %}border-red-300{% else %}border-gray-300{% endif %} dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800"
+                        placeholder="Confirm password">
+                    {% if form.password2.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.password2.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.password2.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Sign up
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

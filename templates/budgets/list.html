@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load dashboard_filters %}
+
+{% block title %}Budgets - Wallet Watcher{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Budgets</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for budget_type in budget_types %}
+            {% with budget=budgets|get_item:budget_type %}
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                {{ budget_type|title }} Budget
+                            </h3>
+                            {% if budget %}
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'budgets:budget_update' budget.pk %}" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </a>
+                                    <a href="{% url 'budgets:budget_delete' budget.pk %}" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if budget %}
+                            <div class="mt-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Budget Amount</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">&#2547;{{ budget.amount }}</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Spent</span>
+                                    <span class="text-sm font-medium {% if budget.is_exceeded %}text-red-600 dark:text-red-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
+                                        &#2547;{{ budget.get_spent_amount }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Remaining</span>
+                                    <span class="text-sm font-medium {% if budget.is_exceeded %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                                        &#2547;{{ budget.get_remaining_amount }}
+                                    </span>
+                                </div>
+
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                    <div class="h-2.5 rounded-full {% if budget.get_percentage_spent > 100 %}bg-red-600{% elif budget.get_percentage_spent > 75 %}bg-yellow-500{% else %}bg-green-500{% endif %}" 
+                                        style="width: {% if budget.get_percentage_spent > 100 %}100{% else %}{{ budget.get_percentage_spent }}{% endif %}%">
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="mt-4 text-center">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No budget set</p>
+                                <a href="{% url 'budgets:budget_create' %}?type={{ budget_type }}" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 dark:text-primary-200 dark:bg-primary-900 dark:hover:bg-primary-800">
+                                    Set Budget
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

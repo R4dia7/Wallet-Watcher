@@ -1,0 +1,96 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+.env.local
+
+# Django specific
+*.log
+*.pot
+*.pyc
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+db.sqlite3
+media/
+staticfiles/
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Testing and profiling
+.pytest_cache/
+test-results/
+profiler-output/
+
+# VS Code
+.vscode/
+.history/
+.devdbrc
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Docker
+**/__pycache__/
+*.pyc
+docker-compose.override.yml
+docker-compose.dev.yml
+.docker/
+*.pid
+
+# Docker volumes
+data/
+tmp/
+*.sock
+
+# Build artifacts
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+
+# Gunicorn/PID
+gunicorn.pid
+
+# Logs
+*.log
+logs/
+
+# Migrations
+**/migrations/*.pyc
+**/migrations/__pycache__/
