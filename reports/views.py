@@ -207,24 +207,41 @@ def create_custom_report(request):
     if request.method == 'POST':
         form = ReportForm(request.POST, user=request.user)
         if form.is_valid():
-            report = form.save(commit=False)
-            report.user = request.user
-            report.report_type = 'custom'
-            report.save()
-            
-            messages.success(request, "Custom report created successfully.")
-            return redirect('reports:detail', pk=report.pk)
+            try:
+                # Extract the data from form
+                report = form.save(commit=False)
+                report.user = request.user
+                report.report_type = 'custom'
+                
+                if not timezone.is_aware(report.start_date):
+                    report.start_date = timezone.make_aware(report.start_date)
+                if not timezone.is_aware(report.end_date):
+                    report.end_date = timezone.make_aware(report.end_date)
+                
+                report.save()
+                form.save_m2m()
+                
+                messages.success(request, "Custom report created successfully.")
+                return redirect('reports:detail', pk=report.pk)
+            except Exception as e:
+                messages.error(request, f"Error creating report: {str(e)}")
+                print(f"Error in create_custom_report: {str(e)}")
+        else:
+            # Print form errors to help debug
+            print(f"Form errors: {form.errors}")
+            messages.error(request, "There was an error with your form submission. Please check the form and try again.")
     else:
         # Default to current month for date range
         today = timezone.now().date()
         start_date = today.replace(day=1)
+        end_date = today
         
         form = ReportForm(
             user=request.user,
             initial={
                 'title': f"Custom Report - {start_date.strftime('%B %Y')}",
                 'start_date': start_date,
-                'end_date': today,
+                'end_date': end_date,
                 'sort_by': 'date_desc',
                 'transaction_types': ['income', 'expense'],  # Include all by default
             }
@@ -233,7 +250,6 @@ def create_custom_report(request):
     return render(request, 'reports/custom_report_form.html', {
         'form': form,
     })
-
 
 class ReportDetailView(LoginRequiredMixin, DetailView):
     model = Report

@@ -61,14 +61,14 @@ class ReportForm(forms.ModelForm):
     ]
     
     title = forms.CharField(widget=forms.TextInput(attrs={
-        'class': 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
+        'class': 'p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
         'placeholder': 'Report Title',
     }))
     
     start_date = forms.DateTimeField(
         input_formats=['%Y-%m-%d'],
         widget=forms.DateInput(attrs={
-            'class': 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
+            'class': 'p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
             'type': 'date',
         }),
     )
@@ -76,7 +76,7 @@ class ReportForm(forms.ModelForm):
     end_date = forms.DateTimeField(
         input_formats=['%Y-%m-%d'],
         widget=forms.DateInput(attrs={
-            'class': 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
+            'class': 'p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
             'type': 'date',
         }),
     )
@@ -99,7 +99,7 @@ class ReportForm(forms.ModelForm):
     sort_by = forms.ChoiceField(
         choices=Report.SORT_OPTIONS,
         widget=forms.Select(attrs={
-            'class': 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
+            'class': 'p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
         }),
     )
     
@@ -114,12 +114,7 @@ class ReportForm(forms.ModelForm):
     
     class Meta:
         model = Report
-        fields = ['title', 'report_type', 'start_date', 'end_date', 'transaction_types', 'categories', 'sort_by']
-        widgets = {
-            'report_type': forms.Select(attrs={
-                'class': 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white',
-            }),
-        }
+        fields = ['title', 'start_date', 'end_date', 'transaction_types', 'categories', 'sort_by']
     
     def clean(self):
         cleaned_data = super().clean()

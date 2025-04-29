@@ -1,4 +1,4 @@
-import time
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth import get_user_model
 from decimal import Decimal
@@ -308,17 +308,21 @@ class Report(models.Model):
     def generate_pdf(self):
         """Generate a PDF report"""
         from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.pagesizes import letter, landscape
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
+        from reportlab.platypus.flowables import KeepTogether
         import io
 
         data = self.generate_report_data()
         buffer = io.BytesIO()
 
+        # Use landscape orientation for more width
+        pagesize = landscape(letter) if len(data['transactions']) > 10 else letter
+        
         # Create the PDF object
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        doc = SimpleDocTemplate(buffer, pagesize=pagesize, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
         styles = getSampleStyleSheet()
         elements = []
 
@@ -340,7 +344,7 @@ class Report(models.Model):
         )
         elements.append(Paragraph(f"Report Type: {data['report_info']['type']}", info_style))
         elements.append(Paragraph(f"Period: {data['report_info']['period']}", info_style))
-        elements.append(Paragraph(f"Generated At: {time.strftime('%Y-%m-%d %H:%M:%S')}", info_style))
+        elements.append(Paragraph(f"Generated At: { timezone.now().strftime('%Y-%m-%d %H:%M:%S')}", info_style))
         elements.append(Spacer(1, 20))
 
         # Add summary
@@ -359,7 +363,7 @@ class Report(models.Model):
             ['Number of Transactions', str(data['summary']['transaction_count'])],
         ]
 
-        summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
+        summary_table = Table(summary_data, colWidths=[2.5*inch, 2.5*inch])
         summary_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
@@ -378,37 +382,68 @@ class Report(models.Model):
         elements.append(summary_table)
         elements.append(Spacer(1, 20))
 
+        # Create a paragraph style for table cells
+        cell_style = ParagraphStyle(
+            'CellStyle',
+            parent=styles['Normal'],
+            fontSize=8,
+            wordWrap='CJK',
+            leading=10
+        )
+        
         # Add transactions
         if data['transactions']:
             elements.append(Paragraph("Transactions", summary_style))
+            
+            # Create column headers
             transaction_data = [['Date', 'Name', 'Type', 'Amount', 'Category', 'Budget']]
+            
+            # Format transaction data as paragraphs to enable wrapping
             for transaction in data['transactions']:
-                transaction_data.append([
-                    transaction['date'],
-                    transaction['name'],
-                    transaction['type'],
-                    f"${transaction['amount']}",
-                    transaction['category'],
-                    transaction['budget'],
-                ])
+                row = [
+                    Paragraph(transaction['date'], cell_style),
+                    Paragraph(transaction['name'][:40], cell_style),  # Limit name length
+                    Paragraph(transaction['type'], cell_style),
+                    Paragraph(f"${transaction['amount']}", cell_style),
+                    Paragraph(transaction['category'], cell_style),
+                    Paragraph(transaction['budget'], cell_style),
+                ]
+                transaction_data.append(row)
 
-            transaction_table = Table(transaction_data, colWidths=[1*inch, 1.5*inch, 0.75*inch, 0.75*inch, 1*inch, 1*inch])
+            # Calculate column widths based on page orientation
+            if pagesize == letter:
+                # Portrait mode
+                col_widths = [0.8*inch, 1.7*inch, 0.7*inch, 0.7*inch, 0.9*inch, 0.9*inch]
+            else:
+                # Landscape mode
+                col_widths = [1.2*inch, 2.5*inch, 1*inch, 1*inch, 1.5*inch, 1.5*inch]
+                
+            transaction_table = Table(transaction_data, colWidths=col_widths, repeatRows=1)
             transaction_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('ALIGN', (0, 1), (-1, -1), 'LEFT'),  # Left align text for better readability
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Vertical centering
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 10),
-                ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),  # Alternating row colors
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),  # Add padding
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
             ]))
 
-            elements.append(transaction_table)
+            # Use KeepTogether to prevent table from breaking across pages if it's small enough
+            if len(data['transactions']) <= 15:
+                elements.append(KeepTogether([transaction_table]))
+            else:
+                elements.append(transaction_table)
+            
             elements.append(Spacer(1, 20))
 
         # Add budgets
@@ -417,32 +452,37 @@ class Report(models.Model):
             budget_data = [['Type', 'Amount', 'Spent', 'Remaining', 'Status']]
             for budget in data['budgets']:
                 budget_data.append([
-                    budget['type'],
-                    f"${budget['amount']}",
-                    f"${budget['spent']}",
-                    f"${budget['remaining']}",
-                    'Exceeded' if budget['is_exceeded'] else 'Normal',
+                    Paragraph(budget['type'], cell_style),
+                    Paragraph(f"${budget['amount']}", cell_style),
+                    Paragraph(f"${budget['spent']}", cell_style),
+                    Paragraph(f"${budget['remaining']}", cell_style),
+                    Paragraph('Exceeded' if budget['is_exceeded'] else 'Normal', cell_style),
                 ])
 
-            budget_table = Table(budget_data, colWidths=[1.5*inch, 1*inch, 1*inch, 1*inch, 1*inch])
+            budget_table = Table(budget_data, colWidths=[2*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1*inch], repeatRows=1)
             budget_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 10),
-                ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
             ]))
 
-            elements.append(budget_table)
+            elements.append(KeepTogether([budget_table]))
 
         # Generate PDF
         doc.build(elements)
         buffer.seek(0)
         return buffer
+    

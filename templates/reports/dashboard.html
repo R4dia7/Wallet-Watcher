@@ -35,7 +35,7 @@
                     <!-- Report Type -->
                     <div>
                         <label for="report_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Report Type</label>
-                        <select id="report_type" name="report_type" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white" onchange="this.form.submit()">
+                        <select id="report_type" name="report_type" class="p-2 mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white" onchange="this.form.submit()">
                             {% for value, name in report_types %}
                                 <option value="{{ value }}" {% if value == report_type %}selected{% endif %}>{{ name }}</option>
                             {% endfor %}
@@ -45,7 +45,7 @@
                     <!-- Sort By -->
                     <div>
                         <label for="sort_by" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sort Transactions By</label>
-                        <select id="sort_by" name="sort_by" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white" onchange="this.form.submit()">
+                        <select id="sort_by" name="sort_by" class="p-2 mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white" onchange="this.form.submit()">
                             {% for value, name in sort_options %}
                                 <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ name }}</option>
                             {% endfor %}
@@ -97,12 +97,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="md:col-span-2">
                         <label for="id_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Report Title</label>
-                        <input type="text" name="title" id="id_title" value="{{ report_type|title }} Report - {{ period_text }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                        <input type="text" name="title" id="id_title" value="{{ report_type|title }} Report - {{ period_text }}" class="p-2 mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     </div>
                     
                     <div>
                         <label for="id_sort_by" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</label>
-                        <select name="sort_by" id="id_sort_by" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                        <select name="sort_by" id="id_sort_by" class="p-2 mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                             {% for value, name in sort_options %}
                                 <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ name }}</option>
                             {% endfor %}
